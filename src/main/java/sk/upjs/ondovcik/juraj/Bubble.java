@@ -2,6 +2,7 @@ package sk.upjs.ondovcik.juraj;
 
 import sk.upjs.jpaz2.ImageTurtleShape;
 import sk.upjs.jpaz2.Turtle;
+import com.logitech.gaming.LogiLED;
 
 public class Bubble extends Turtle {
 
@@ -16,28 +17,6 @@ public class Bubble extends Turtle {
         this.y = y;
         this.color = color;
         this.setShape(new ImageTurtleShape(chooseColor(color)));
-    }
-
-    public String chooseColor(String color) {
-        switch (color) {
-            case "red":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/red.png";
-            case "blue":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/blue.png";
-            case "green":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
-            case "yellow":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
-            default:
-                return "null";
-        }
-    }
-
-    public void generateRandomColor() {
-        String[] colors = {"red", "blue", "green", "yellow"};
-        int randomIndex = (int) (Math.random() * colors.length);
-        this.color = colors[randomIndex];
-        this.setShape(new ImageTurtleShape(chooseColor(this.color)));
     }
 
     public double getX() {
@@ -65,5 +44,41 @@ public class Bubble extends Turtle {
         this.setShape(new ImageTurtleShape(chooseColor(color)));
     }
 
+    public String chooseColor(String color) {
+        switch (color) {
+            case "red":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/red.png";
+            case "blue":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/blue.png";
+            case "green":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
+            case "yellow":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
+            default:
+                return "null";
+        }
+    }
+
+    public void generateRandomColor() {
+        String[] colors = {"red", "blue", "green", "yellow"};
+        int randomIndex = (int) (Math.random() * colors.length);
+        this.color = colors[randomIndex];
+        this.setShape(new ImageTurtleShape(chooseColor(this.color)));
+    }
+
+    public String chooseLogitechColor(String color) {
+        switch (color) {
+            case "red":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/red.png";
+            case "blue":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/blue.png";
+            case "green":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
+            case "yellow":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
+            default:
+                return "null";
+        }
+    }
 
 }

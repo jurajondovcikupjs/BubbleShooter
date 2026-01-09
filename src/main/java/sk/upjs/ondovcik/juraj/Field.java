@@ -4,27 +4,33 @@ import sk.upjs.jpaz2.AnimatedWinPane;
 import sk.upjs.jpaz2.Turtle;
 import sk.upjs.jpaz2.WinPane;
 import sk.upjs.ondovcik.juraj.res.Theme;
+import com.logitech.gaming.LogiLED;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Field extends WinPane {
 
-    public static int SCORE = 0;
-    public static int LEFT_BORDER = 40;
-    public static int RIGHT_BORDER = 680;
-    public static int TOP_BORDER = 100;
-    public static int CHECK_LINE_BOTTOM = 1000;
+    public int SCORE = 0;
+    final int LEFT_BORDER = 40;
+    final int RIGHT_BORDER = 680;
+    final int TOP_BORDER = 100;
+    final int CHECK_LINE_BOTTOM = 1000;
+    public static final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
+    public static final int BUBBLE_SIZE = 54;
+    final boolean USE_LIGHTING = false;
 
     List<Bubble> bubbles = new ArrayList<Bubble>();
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
-    public static final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
-    public static final int BUBBLE_SIZE = 32; // Adjust if your bubble images are a different size
+
 
     public Field() {
+        if (USE_LIGHTING) LogiLED.LogiLedInit();
+
         this.setTitle("Bubble Shooter");
         this.resize(720, 1280);
         this.setPosition(0,0);
@@ -37,6 +43,7 @@ public class Field extends WinPane {
         this.add(nextBubble);
         nextBubble.setX(250);
         nextBubble.setY(1225);
+        setLogitechLighting(nextBubble.getColor());
 
         generateUI();
 
@@ -59,13 +66,6 @@ public class Field extends WinPane {
         this.remove(t);
     }
 
-    public int gridCoord(int inputCoord, boolean isX, int otherCoord) {
-        int offset = isX ? LEFT_BORDER : TOP_BORDER;
-        int coord = inputCoord - offset;
-        int gridIndex = Math.round(coord / (float) BUBBLE_SIZE);
-        return gridIndex * BUBBLE_SIZE + offset;
-    }
-
     @Override
     protected void onMouseMoved(int x, int y, MouseEvent detail) {
         super.onMouseMoved(x, y, detail);
@@ -75,14 +75,53 @@ public class Field extends WinPane {
     @Override
     protected void onMouseClicked(int x, int y, MouseEvent detail) {
         if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER) {
-            int snappedY = gridCoord(y, false, 0);
-            int snappedX = gridCoord(x, true, snappedY);
+            int snappedY = snapBubble(x, y, false);
+            int snappedX = snapBubble(x, y, true);
             Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
             this.add(b);
             bubbles.add(b);
             b.setDirectionTowards(x, y);
             b.penUp();
             nextBubble.generateRandomColor();
+
+            setLogitechLighting(nextBubble.getColor());
+        }
+    }
+
+    public void setLogitechLighting(String color) {
+        if (!USE_LIGHTING) return;
+        if (Objects.equals(color, "red")) {
+            LogiLED.LogiLedSetLighting(75,0,0);
+        } else if (Objects.equals(color, "blue")) {
+            LogiLED.LogiLedSetLighting(0,0,75);
+        } else if (Objects.equals(color, "green")) {
+            LogiLED.LogiLedSetLighting(0,75,0);
+        } else if (Objects.equals(color, "yellow")) {
+            LogiLED.LogiLedSetLighting(75,63,0);
+        }
+    }
+
+
+    public int snapBubble(int x, int y, boolean isX) {
+        int tempX = x - LEFT_BORDER;
+        int tempY = y - TOP_BORDER;
+        boolean shiftX = false;
+        tempX = tempX / BUBBLE_SIZE;
+        //System.out.println(tempX);
+        tempX = tempX * BUBBLE_SIZE + 2 * LEFT_BORDER;
+
+        tempY = tempY / BUBBLE_SIZE;
+        //System.out.println(tempY);
+        if (tempY%2 == 1) {
+            shiftX = true;
+        }
+        tempY = tempY * BUBBLE_SIZE + (3*TOP_BORDER/2);
+
+        if (isX) {
+            if (shiftX) tempX+= BUBBLE_SIZE/2;
+            return tempX;
+        } else {
+            return tempY;
         }
     }
 
