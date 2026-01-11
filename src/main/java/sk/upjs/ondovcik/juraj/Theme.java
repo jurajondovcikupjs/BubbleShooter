@@ -1,4 +1,4 @@
-package sk.upjs.ondovcik.juraj.res;
+package sk.upjs.ondovcik.juraj;
 
 import java.awt.*;
 

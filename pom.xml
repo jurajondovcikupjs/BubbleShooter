@@ -22,6 +22,19 @@
 			<artifactId>jpaz2</artifactId>
 			<version>1.1.1</version>
 		</dependency>
+		<dependency>
+			<groupId>javazoom</groupId>
+			<artifactId>jlayer</artifactId>
+			<version>1.0.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.logitech</groupId>
+			<artifactId>logiled</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/src/main/java/sk/upjs/ondovcik/juraj/libs/logiled.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>

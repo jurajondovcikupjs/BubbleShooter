@@ -59,11 +59,12 @@ public class Bubble extends Turtle {
         }
     }
 
-    public void generateRandomColor() {
+    public String generateRandomColor() {
         String[] colors = {"red", "blue", "green", "yellow"};
         int randomIndex = (int) (Math.random() * colors.length);
         this.color = colors[randomIndex];
         this.setShape(new ImageTurtleShape(chooseColor(this.color)));
+        return this.color;
     }
 
     public String chooseLogitechColor(String color) {

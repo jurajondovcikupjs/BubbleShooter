@@ -1,13 +1,13 @@
 package sk.upjs.ondovcik.juraj;
 
-import sk.upjs.jpaz2.AnimatedWinPane;
+import javazoom.jl.player.Player;
 import sk.upjs.jpaz2.Turtle;
 import sk.upjs.jpaz2.WinPane;
-import sk.upjs.ondovcik.juraj.res.Theme;
 import com.logitech.gaming.LogiLED;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +46,7 @@ public class Field extends WinPane {
         setLogitechLighting(nextBubble.getColor());
 
         generateUI();
-
+        generateBubbles(4);
     }
 
     public void generateUI() {
@@ -79,6 +79,8 @@ public class Field extends WinPane {
             int snappedX = snapBubble(x, y, true);
             Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
             this.add(b);
+            int soundNumber = (int)(Math.random() * 2) + 1;
+            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
             bubbles.add(b);
             b.setDirectionTowards(x, y);
             b.penUp();
@@ -103,33 +105,62 @@ public class Field extends WinPane {
 
 
     public int snapBubble(int x, int y, boolean isX) {
-        int tempX = x - LEFT_BORDER;
         int tempY = y - TOP_BORDER;
-        boolean shiftX = false;
-        tempX = tempX / BUBBLE_SIZE;
-        //System.out.println(tempX);
-        tempX = tempX * BUBBLE_SIZE + 2 * LEFT_BORDER;
-
-        tempY = tempY / BUBBLE_SIZE;
-        //System.out.println(tempY);
-        if (tempY%2 == 1) {
-            shiftX = true;
-        }
-        tempY = tempY * BUBBLE_SIZE + (3*TOP_BORDER/2);
+        int row = tempY / BUBBLE_SIZE;
+        boolean shiftX = (row % 2 == 1);
+        tempY = row * BUBBLE_SIZE + (3 * TOP_BORDER / 2);
 
         if (isX) {
-            if (shiftX) tempX+= BUBBLE_SIZE/2;
-            return tempX;
+            // Calculate possible bubble centers for this row
+            int tempX = x - LEFT_BORDER;
+            double colRaw = (tempX - (shiftX ? BUBBLE_SIZE / 2.0 : 0)) / (double) BUBBLE_SIZE;
+            int col = (int) Math.round(colRaw);
+            int snappedX = LEFT_BORDER + col * BUBBLE_SIZE + (shiftX ? BUBBLE_SIZE / 2 : 0);
+            return snappedX;
         } else {
             return tempY;
         }
     }
 
-    public void exportToFile() {
-        
+    public void generateBubbles(int amountOfRows) {
+        for (int i = 0; i < amountOfRows; i++) {
+            int bubblesInRow = (i % 2 == 0) ? 11 : 10;
+            for (int j = 0; j < bubblesInRow; j++) {
+                // Move all bubbles by 1 bubble to the right
+                int approxY = TOP_BORDER + i * BUBBLE_SIZE;
+                int approxX;
+                if (i % 2 == 0) {
+                    approxX = LEFT_BORDER + (j + 1) * BUBBLE_SIZE;
+                } else {
+                    approxX = LEFT_BORDER + (j + 1) * BUBBLE_SIZE + BUBBLE_SIZE / 2;
+                }
+                // Snap both X and Y using the same logic as user placement
+                int snappedY = snapBubble(approxX, approxY, false);
+                int snappedX = snapBubble(approxX, approxY, true);
+                Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
+                this.add(b);
+                bubbles.add(b);
+                nextBubble.generateRandomColor();
+            }
+        }
     }
 
-    public void importFromFile() {
-
+    public void playAudio(String filePath) {
+        try {
+            FileInputStream fis = new FileInputStream(filePath);
+            Player playMP3 = new Player(fis);
+            playMP3.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+
+    //public void exportToFile() {
+    //
+    //}
+//
+    //public void importFromFile() {
+//
+    //}
 }
