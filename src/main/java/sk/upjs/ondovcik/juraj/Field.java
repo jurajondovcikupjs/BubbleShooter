@@ -26,7 +26,11 @@ public class Field extends WinPane {
     List<Bubble> bubbles = new ArrayList<Bubble>();
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
-
+    Bubble flyingBubble = null;
+    double flyingBubbleVX = 0;
+    double flyingBubbleVY = 0;
+    final double FLYING_SPEED = 18.0; // pixels per frame
+    javax.swing.Timer flyingTimer;
 
     public Field() {
         if (USE_LIGHTING) LogiLED.LogiLedInit();
@@ -47,6 +51,10 @@ public class Field extends WinPane {
 
         generateUI();
         generateBubbles(4);
+
+        // Timer for flying bubble
+        flyingTimer = new javax.swing.Timer(15, e -> updateFlyingBubble());
+        flyingTimer.start();
     }
 
     public void generateUI() {
@@ -74,19 +82,23 @@ public class Field extends WinPane {
 
     @Override
     protected void onMouseClicked(int x, int y, MouseEvent detail) {
+        if (flyingBubble != null) return; // Only one flying bubble at a time
         if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER) {
-            int snappedY = snapBubble(x, y, false);
-            int snappedX = snapBubble(x, y, true);
-            Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
-            this.add(b);
-            int soundNumber = (int)(Math.random() * 2) + 1;
-            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
-            bubbles.add(b);
-            b.setDirectionTowards(x, y);
-            b.penUp();
-            nextBubble.generateRandomColor();
-
+            // Launch the nextBubble from the turret
+            double startX = turret.getX();
+            double startY = turret.getY() - 40; // slightly above turret
+            double dx = x - startX;
+            double dy = y - startY;
+            double len = Math.sqrt(dx*dx + dy*dy);
+            flyingBubbleVX = FLYING_SPEED * dx / len;
+            flyingBubbleVY = FLYING_SPEED * dy / len;
+            flyingBubble = new Bubble((int)startX, (int)startY, nextBubble.getColor());
+            this.add(flyingBubble);
+            flyingBubble.penUp();
             setLogitechLighting(nextBubble.getColor());
+
+            nextBubble.setX(-1000);
+            nextBubble.setX(nextBubble.getX() + 1000);
         }
     }
 
@@ -105,44 +117,87 @@ public class Field extends WinPane {
 
 
     public int snapBubble(int x, int y, boolean isX) {
-        int tempY = y - TOP_BORDER;
+        return snapBubble((double)x, (double)y, isX);
+    }
+
+    public int snapBubble(double x, double y, boolean isX) {
+        int tempY = (int)(y - TOP_BORDER);
         int row = tempY / BUBBLE_SIZE;
         boolean shiftX = (row % 2 == 1);
-        tempY = row * BUBBLE_SIZE + (3 * TOP_BORDER / 2);
+        int snappedY = row * BUBBLE_SIZE + TOP_BORDER + BUBBLE_SIZE / 2;
 
         if (isX) {
-            // Calculate possible bubble centers for this row
-            int tempX = x - LEFT_BORDER;
-            double colRaw = (tempX - (shiftX ? BUBBLE_SIZE / 2.0 : 0)) / (double) BUBBLE_SIZE;
-            int col = (int) Math.round(colRaw);
-            int snappedX = LEFT_BORDER + col * BUBBLE_SIZE + (shiftX ? BUBBLE_SIZE / 2 : 0);
-            return snappedX;
+            double gridOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
+            double colRaw = (x - gridOrigin) / BUBBLE_SIZE;
+            int col = (int) Math.floor(colRaw + 0.5); // Improved: center-based snapping
+            return (int) (gridOrigin + col * BUBBLE_SIZE);
         } else {
-            return tempY;
+            return snappedY;
         }
     }
 
     public void generateBubbles(int amountOfRows) {
         for (int i = 0; i < amountOfRows; i++) {
             int bubblesInRow = (i % 2 == 0) ? 11 : 10;
+            boolean shiftX = (i % 2 == 1);
+            double rowOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
+            int y = TOP_BORDER + i * BUBBLE_SIZE + BUBBLE_SIZE / 2;
             for (int j = 0; j < bubblesInRow; j++) {
-                // Move all bubbles by 1 bubble to the right
-                int approxY = TOP_BORDER + i * BUBBLE_SIZE;
-                int approxX;
-                if (i % 2 == 0) {
-                    approxX = LEFT_BORDER + (j + 1) * BUBBLE_SIZE;
-                } else {
-                    approxX = LEFT_BORDER + (j + 1) * BUBBLE_SIZE + BUBBLE_SIZE / 2;
-                }
-                // Snap both X and Y using the same logic as user placement
-                int snappedY = snapBubble(approxX, approxY, false);
-                int snappedX = snapBubble(approxX, approxY, true);
+                int x = (int) (rowOrigin + j * BUBBLE_SIZE);
+                int snappedY = snapBubble(x, y, false);
+                int snappedX = snapBubble(x, y, true);
                 Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
                 this.add(b);
                 bubbles.add(b);
                 nextBubble.generateRandomColor();
             }
         }
+    }
+
+    private void updateFlyingBubble() {
+        if (flyingBubble == null) return;
+        double x = flyingBubble.getX() + flyingBubbleVX;
+        double y = flyingBubble.getY() + flyingBubbleVY;
+        // Bounce off left/right borders
+        if (x < LEFT_BORDER + BUBBLE_SIZE/2) {
+            x = LEFT_BORDER + BUBBLE_SIZE/2;
+            flyingBubbleVX = -flyingBubbleVX;
+        }
+        if (x > RIGHT_BORDER - BUBBLE_SIZE/2) {
+            x = RIGHT_BORDER - BUBBLE_SIZE/2;
+            flyingBubbleVX = -flyingBubbleVX;
+        }
+        flyingBubble.setX((int)x);
+        flyingBubble.setY((int)y);
+        // Check collision with top border
+        if (y < TOP_BORDER + BUBBLE_SIZE/2) {
+            snapFlyingBubble();
+            return;
+        }
+        // Check collision with other bubbles
+        for (Bubble b : bubbles) {
+            double dist = Math.hypot(b.getX() - x, b.getY() - y);
+            if (dist < BUBBLE_SIZE - 2) { // slightly less than diameter
+                snapFlyingBubble();
+                return;
+            }
+        }
+    }
+
+    private void snapFlyingBubble() {
+        int snappedY = snapBubble(flyingBubble.getX(), flyingBubble.getY(), false);
+        int snappedX = snapBubble(flyingBubble.getX(), flyingBubble.getY(), true);
+        flyingBubble.setX(snappedX);
+        flyingBubble.setY(snappedY);
+        bubbles.add(flyingBubble);
+        int soundNumber = (int)(Math.random() * 2) + 1;
+        playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+        flyingBubble = null;
+        // Prepare next bubble
+        nextBubble.generateRandomColor();
+        nextBubble.setX(250);
+        nextBubble.setY(1225);
+        setLogitechLighting(nextBubble.getColor());
     }
 
     public void playAudio(String filePath) {

@@ -82,4 +82,9 @@ public class Bubble extends Turtle {
         }
     }
 
+    public boolean isInRange(Bubble b) {
+        double distance = Math.sqrt(this.getX()*this.getX() + this.getY() * this.getY());
+        return distance <= 54;
+    }
+
 }
