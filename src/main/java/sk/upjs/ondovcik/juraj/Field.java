@@ -184,14 +184,96 @@ public class Field extends WinPane {
         }
     }
 
+    private List<Bubble> getConnectedSameColorBubbles(Bubble start) {
+        List<Bubble> connected = new ArrayList<>();
+        List<Bubble> toVisit = new ArrayList<>();
+        toVisit.add(start);
+        connected.add(start);
+        while (!toVisit.isEmpty()) {
+            Bubble current = toVisit.remove(0);
+            for (Bubble b : bubbles) {
+                if (connected.contains(b)) continue;
+                if (!Objects.equals(b.getColor(), start.getColor())) continue;
+                // Hex grid neighbor check
+                double dx = Math.abs(b.getX() - current.getX());
+                double dy = Math.abs(b.getY() - current.getY());
+                boolean sameRow = b.getY() == current.getY();
+                boolean adjacentRow = Math.abs(b.getY() - current.getY()) == BUBBLE_SIZE;
+                boolean neighbor = false;
+                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3) neighbor = true; // left/right
+                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3)) neighbor = true; // up/down left/right (hex offset)
+                if (neighbor) {
+                    connected.add(b);
+                    toVisit.add(b);
+                }
+            }
+        }
+        return connected;
+    }
+
+    private List<Bubble> getConnectedToTopRow() {
+        List<Bubble> connected = new ArrayList<>();
+        List<Bubble> toVisit = new ArrayList<>();
+        // Find all bubbles in the top row
+        for (Bubble b : bubbles) {
+            if (Math.abs(b.getY() - (TOP_BORDER + BUBBLE_SIZE / 2)) < 1e-3) {
+                connected.add(b);
+                toVisit.add(b);
+            }
+        }
+        // BFS for all connected bubbles
+        while (!toVisit.isEmpty()) {
+            Bubble current = toVisit.remove(0);
+            for (Bubble b : bubbles) {
+                if (connected.contains(b)) continue;
+                double dx = Math.abs(b.getX() - current.getX());
+                double dy = Math.abs(b.getY() - current.getY());
+                boolean sameRow = b.getY() == current.getY();
+                boolean adjacentRow = Math.abs(b.getY() - current.getY()) == BUBBLE_SIZE;
+                boolean neighbor = false;
+                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3) neighbor = true;
+                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3)) neighbor = true;
+                if (neighbor) {
+                    connected.add(b);
+                    toVisit.add(b);
+                }
+            }
+        }
+        return connected;
+    }
+
     private void snapFlyingBubble() {
         int snappedY = snapBubble(flyingBubble.getX(), flyingBubble.getY(), false);
         int snappedX = snapBubble(flyingBubble.getX(), flyingBubble.getY(), true);
         flyingBubble.setX(snappedX);
         flyingBubble.setY(snappedY);
         bubbles.add(flyingBubble);
-        int soundNumber = (int)(Math.random() * 2) + 1;
-        playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+        // Check for connected bubbles of the same color
+        List<Bubble> group = getConnectedSameColorBubbles(flyingBubble);
+        if (group.size() >= 3) {
+            for (Bubble b : group) {
+                this.remove(b);
+            }
+            bubbles.removeAll(group);
+            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
+            SCORE += group.size();
+            System.out.println("SCORE: " + SCORE);
+            // Remove flying bubbles (not connected to top row)
+            List<Bubble> connectedToTop = getConnectedToTopRow();
+            List<Bubble> flying = new ArrayList<>();
+            for (Bubble b : new ArrayList<>(bubbles)) {
+                if (!connectedToTop.contains(b)) {
+                    flying.add(b);
+                }
+            }
+            for (Bubble b : flying) {
+                this.remove(b);
+                bubbles.remove(b);
+            }
+        } else {
+            int soundNumber = (int)(Math.random() * 2) + 1;
+            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+        }
         flyingBubble = null;
         // Prepare next bubble
         nextBubble.generateRandomColor();
@@ -208,6 +290,11 @@ public class Field extends WinPane {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void removeBubble(Bubble bubble) {
+        this.remove(bubble);
+        bubbles.remove(bubble);
     }
 
 

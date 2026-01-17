@@ -2,7 +2,6 @@ package sk.upjs.ondovcik.juraj;
 
 import sk.upjs.jpaz2.ImageTurtleShape;
 import sk.upjs.jpaz2.Turtle;
-import com.logitech.gaming.LogiLED;
 
 public class Bubble extends Turtle {
 
@@ -59,12 +58,11 @@ public class Bubble extends Turtle {
         }
     }
 
-    public String generateRandomColor() {
+    public void generateRandomColor() {
         String[] colors = {"red", "blue", "green", "yellow"};
         int randomIndex = (int) (Math.random() * colors.length);
         this.color = colors[randomIndex];
         this.setShape(new ImageTurtleShape(chooseColor(this.color)));
-        return this.color;
     }
 
     public String chooseLogitechColor(String color) {
