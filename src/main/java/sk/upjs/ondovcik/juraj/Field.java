@@ -14,43 +14,61 @@ import java.util.Objects;
 
 public class Field extends WinPane {
 
-    public int SCORE = 0;
-    final int LEFT_BORDER = 40;
-    final int RIGHT_BORDER = 680;
-    final int TOP_BORDER = 100;
-    final int CHECK_LINE_BOTTOM = 1000;
-    public static final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
-    public static final int BUBBLE_SIZE = 54;
-    final boolean USE_LIGHTING = false;
+    private int SCORE = 0;
+    private final int LEFT_BORDER = 40;
+    private final int RIGHT_BORDER = 680;
+    private final int TOP_BORDER = 100;
+    private final int CHECK_LINE_BOTTOM = 1000;
+    private final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
+    private final int BUBBLE_SIZE = 54;
+    private boolean USE_LIGHTING = true;
+    final double FLYING_SPEED = 18.0; // pixels per frame
 
     List<Bubble> bubbles = new ArrayList<Bubble>();
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
     Bubble flyingBubble = null;
+    Button exitButton = new Button(660, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/exit.png");
+    Button screenshotButton = new Button(610, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/screenshot.png");
+    Button lightingButton = new Button(560, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/lighting.png");
+    Bubble ghostBubble;
     double flyingBubbleVX = 0;
     double flyingBubbleVY = 0;
-    final double FLYING_SPEED = 18.0; // pixels per frame
     javax.swing.Timer flyingTimer;
+    int lastScoreThreshold = 0;
+    int rowsAdded = 4; // Start with 4 initial rows
 
     public Field() {
-        if (USE_LIGHTING) LogiLED.LogiLedInit();
 
         this.setTitle("Bubble Shooter");
         this.resize(720, 1280);
-        this.setPosition(0,0);
+        this.setPosition(0, 0);
         this.setResizable(false);
         this.setBackgroundColor(Theme.BACKGROUND_COLOR);
         this.add(turret);
-        turret.setPosition(360,1200);
+        this.add(exitButton);
+        this.add(screenshotButton);
+        this.add(lightingButton);
+        turret.setPosition(360, 1200);
 
         nextBubble.generateRandomColor();
         this.add(nextBubble);
         nextBubble.setX(250);
         nextBubble.setY(1225);
-        setLogitechLighting(nextBubble.getColor());
 
         generateUI();
         generateBubbles(4);
+
+        ghostBubble = new Bubble();
+        ghostBubble.setColor(nextBubble.getColor()); // Set initial color to match nextBubble
+        ghostBubble.penUp();
+        this.add(ghostBubble);
+        ghostBubble.setTransparency(0.5f); // If supported, make it semi-transparent
+
+        if (USE_LIGHTING) {
+            LogiLED.LogiLedInit();
+            setLogitechLighting(nextBubble.getColor());
+        }
 
         // Timer for flying bubble
         flyingTimer = new javax.swing.Timer(15, e -> updateFlyingBubble());
@@ -63,14 +81,14 @@ public class Field extends WinPane {
         t.setPenWidth(5);
 
         t.setPenColor(Color.RED);
-        t.setPosition(LEFT_BORDER,CHECK_LINE_BOTTOM);
-        t.moveTo(RIGHT_BORDER,CHECK_LINE_BOTTOM);
+        t.setPosition(LEFT_BORDER, CHECK_LINE_BOTTOM);
+        t.moveTo(RIGHT_BORDER, CHECK_LINE_BOTTOM);
 
         t.setPenColor(Theme.TERTIARY);
-        t.setPosition(LEFT_BORDER,1280);
-        t.moveTo(LEFT_BORDER,TOP_BORDER);
-        t.moveTo(RIGHT_BORDER,TOP_BORDER);
-        t.moveTo(RIGHT_BORDER,1280);
+        t.setPosition(LEFT_BORDER, 1280);
+        t.moveTo(LEFT_BORDER, TOP_BORDER);
+        t.moveTo(RIGHT_BORDER, TOP_BORDER);
+        t.moveTo(RIGHT_BORDER, 1280);
         this.remove(t);
     }
 
@@ -78,50 +96,84 @@ public class Field extends WinPane {
     protected void onMouseMoved(int x, int y, MouseEvent detail) {
         super.onMouseMoved(x, y, detail);
         turret.setDirectionTowards(x, y);
+        // Snap ghost bubble to grid
+        int snappedY = snapBubble(x, y, false);
+        int snappedX = snapBubble(x, y, true);
+        ghostBubble.setX(snappedX);
+        ghostBubble.setY(snappedY);
+        ghostBubble.setPosition(snappedX, snappedY);
+        // Always update ghost bubble color and lighting to match nextBubble
+        ghostBubble.setColor(nextBubble.getColor());
     }
 
     @Override
     protected void onMouseClicked(int x, int y, MouseEvent detail) {
-        if (flyingBubble != null) return; // Only one flying bubble at a time
+
+        if (flyingBubble != null)
+            return; // Only one flying bubble at a time
         if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER) {
+            // Set lighting to match the bubble about to be launched
             // Launch the nextBubble from the turret
             double startX = turret.getX();
             double startY = turret.getY() - 40; // slightly above turret
             double dx = x - startX;
             double dy = y - startY;
-            double len = Math.sqrt(dx*dx + dy*dy);
+            double len = Math.sqrt(dx * dx + dy * dy);
             flyingBubbleVX = FLYING_SPEED * dx / len;
             flyingBubbleVY = FLYING_SPEED * dy / len;
-            flyingBubble = new Bubble((int)startX, (int)startY, nextBubble.getColor());
+            flyingBubble = new Bubble((int) startX, (int) startY, nextBubble.getColor());
             this.add(flyingBubble);
             flyingBubble.penUp();
-            setLogitechLighting(nextBubble.getColor());
 
             nextBubble.setX(-1000);
             nextBubble.setX(nextBubble.getX() + 1000);
+
+            // Prepare next bubble
+            nextBubble.generateRandomColor();
+            nextBubble.setX(250);
+            nextBubble.setY(1225);
+            // Only update ghost bubble color, not lighting
+            ghostBubble.setColor(nextBubble.getColor());
+            if (USE_LIGHTING) setLogitechLighting(nextBubble.getColor());
         }
+
+        if (exitButton.checkNearButtonRectangle(x, y)) {
+            System.exit(0);
+        }
+        if (screenshotButton.checkNearButtonRectangle(x, y)) {
+            this.savePicture("screenshot_" + System.currentTimeMillis() + ".png");
+            System.out.println("Screenshot taken.");
+        }
+        if (lightingButton.checkNearButtonRectangle(x, y)) {
+            USE_LIGHTING = !USE_LIGHTING;
+            if (USE_LIGHTING) {
+                LogiLED.LogiLedInit();
+                setLogitechLighting(nextBubble.getColor());
+            } else
+                LogiLED.LogiLedShutdown();
+            System.out.println("Lighting toggled: " + USE_LIGHTING);
+        }
+
     }
 
     public void setLogitechLighting(String color) {
-        if (!USE_LIGHTING) return;
         if (Objects.equals(color, "red")) {
-            LogiLED.LogiLedSetLighting(75,0,0);
+            LogiLED.LogiLedSetLighting(75, 0, 0);
         } else if (Objects.equals(color, "blue")) {
-            LogiLED.LogiLedSetLighting(0,0,75);
+            LogiLED.LogiLedSetLighting(0, 0, 75);
         } else if (Objects.equals(color, "green")) {
-            LogiLED.LogiLedSetLighting(0,75,0);
+            LogiLED.LogiLedSetLighting(0, 75, 0);
         } else if (Objects.equals(color, "yellow")) {
-            LogiLED.LogiLedSetLighting(75,63,0);
+            LogiLED.LogiLedSetLighting(75, 63, 0);
         }
     }
 
-
     public int snapBubble(int x, int y, boolean isX) {
-        return snapBubble((double)x, (double)y, isX);
+        return snapBubble((double) x, (double) y, isX);
     }
 
     public int snapBubble(double x, double y, boolean isX) {
-        int tempY = (int)(y - TOP_BORDER);
+        int tempY = (int) (y - TOP_BORDER);
         int row = tempY / BUBBLE_SIZE;
         boolean shiftX = (row % 2 == 1);
         int snappedY = row * BUBBLE_SIZE + TOP_BORDER + BUBBLE_SIZE / 2;
@@ -129,7 +181,7 @@ public class Field extends WinPane {
         if (isX) {
             double gridOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
             double colRaw = (x - gridOrigin) / BUBBLE_SIZE;
-            int col = (int) Math.floor(colRaw + 0.5); // Improved: center-based snapping
+            int col = (int) Math.round(colRaw); // Use Math.round for center snapping
             return (int) (gridOrigin + col * BUBBLE_SIZE);
         } else {
             return snappedY;
@@ -138,7 +190,7 @@ public class Field extends WinPane {
 
     public void generateBubbles(int amountOfRows) {
         for (int i = 0; i < amountOfRows; i++) {
-            int bubblesInRow = (i % 2 == 0) ? 11 : 10;
+            int bubblesInRow = (i % 2 == 0) ? 12 : 11;
             boolean shiftX = (i % 2 == 1);
             double rowOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
             int y = TOP_BORDER + i * BUBBLE_SIZE + BUBBLE_SIZE / 2;
@@ -155,22 +207,23 @@ public class Field extends WinPane {
     }
 
     private void updateFlyingBubble() {
-        if (flyingBubble == null) return;
+        if (flyingBubble == null)
+            return;
         double x = flyingBubble.getX() + flyingBubbleVX;
         double y = flyingBubble.getY() + flyingBubbleVY;
         // Bounce off left/right borders
-        if (x < LEFT_BORDER + BUBBLE_SIZE/2) {
-            x = LEFT_BORDER + BUBBLE_SIZE/2;
+        if (x < LEFT_BORDER + BUBBLE_SIZE / 2) {
+            x = LEFT_BORDER + BUBBLE_SIZE / 2;
             flyingBubbleVX = -flyingBubbleVX;
         }
-        if (x > RIGHT_BORDER - BUBBLE_SIZE/2) {
-            x = RIGHT_BORDER - BUBBLE_SIZE/2;
+        if (x > RIGHT_BORDER - BUBBLE_SIZE / 2) {
+            x = RIGHT_BORDER - BUBBLE_SIZE / 2;
             flyingBubbleVX = -flyingBubbleVX;
         }
-        flyingBubble.setX((int)x);
-        flyingBubble.setY((int)y);
+        flyingBubble.setX((int) x);
+        flyingBubble.setY((int) y);
         // Check collision with top border
-        if (y < TOP_BORDER + BUBBLE_SIZE/2) {
+        if (y < TOP_BORDER + BUBBLE_SIZE / 2) {
             snapFlyingBubble();
             return;
         }
@@ -192,16 +245,20 @@ public class Field extends WinPane {
         while (!toVisit.isEmpty()) {
             Bubble current = toVisit.remove(0);
             for (Bubble b : bubbles) {
-                if (connected.contains(b)) continue;
-                if (!Objects.equals(b.getColor(), start.getColor())) continue;
+                if (connected.contains(b))
+                    continue;
+                if (!Objects.equals(b.getColor(), start.getColor()))
+                    continue;
                 // Hex grid neighbor check
                 double dx = Math.abs(b.getX() - current.getX());
                 double dy = Math.abs(b.getY() - current.getY());
                 boolean sameRow = b.getY() == current.getY();
                 boolean adjacentRow = Math.abs(b.getY() - current.getY()) == BUBBLE_SIZE;
                 boolean neighbor = false;
-                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3) neighbor = true; // left/right
-                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3)) neighbor = true; // up/down left/right (hex offset)
+                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3)
+                    neighbor = true; // left/right
+                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3))
+                    neighbor = true; // up/down left/right (hex offset)
                 if (neighbor) {
                     connected.add(b);
                     toVisit.add(b);
@@ -225,14 +282,17 @@ public class Field extends WinPane {
         while (!toVisit.isEmpty()) {
             Bubble current = toVisit.remove(0);
             for (Bubble b : bubbles) {
-                if (connected.contains(b)) continue;
+                if (connected.contains(b))
+                    continue;
                 double dx = Math.abs(b.getX() - current.getX());
                 double dy = Math.abs(b.getY() - current.getY());
                 boolean sameRow = b.getY() == current.getY();
                 boolean adjacentRow = Math.abs(b.getY() - current.getY()) == BUBBLE_SIZE;
                 boolean neighbor = false;
-                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3) neighbor = true;
-                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3)) neighbor = true;
+                if (sameRow && Math.abs(dx - BUBBLE_SIZE) < 1e-3)
+                    neighbor = true;
+                if (adjacentRow && (Math.abs(dx) < 1e-3 || Math.abs(dx - BUBBLE_SIZE / 2.0) < 1e-3))
+                    neighbor = true;
                 if (neighbor) {
                     connected.add(b);
                     toVisit.add(b);
@@ -250,6 +310,7 @@ public class Field extends WinPane {
         bubbles.add(flyingBubble);
         // Check for connected bubbles of the same color
         List<Bubble> group = getConnectedSameColorBubbles(flyingBubble);
+        boolean scored = false;
         if (group.size() >= 3) {
             for (Bubble b : group) {
                 this.remove(b);
@@ -257,6 +318,7 @@ public class Field extends WinPane {
             bubbles.removeAll(group);
             playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
             SCORE += group.size();
+            scored = true;
             System.out.println("SCORE: " + SCORE);
             // Remove flying bubbles (not connected to top row)
             List<Bubble> connectedToTop = getConnectedToTopRow();
@@ -271,15 +333,17 @@ public class Field extends WinPane {
                 bubbles.remove(b);
             }
         } else {
-            int soundNumber = (int)(Math.random() * 2) + 1;
+            int soundNumber = (int) (Math.random() * 2) + 1;
             playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
         }
+        // Move down and generate row for every 20 points
+        if ((SCORE / 30) > (lastScoreThreshold / 30)) {
+            moveDownAndGenerateRow();
+            lastScoreThreshold = SCORE;
+            // Only update ghost bubble color, not lighting
+            ghostBubble.setColor(nextBubble.getColor());
+        }
         flyingBubble = null;
-        // Prepare next bubble
-        nextBubble.generateRandomColor();
-        nextBubble.setX(250);
-        nextBubble.setY(1225);
-        setLogitechLighting(nextBubble.getColor());
     }
 
     public void playAudio(String filePath) {
@@ -292,17 +356,51 @@ public class Field extends WinPane {
         }
     }
 
-    public void removeBubble(Bubble bubble) {
-        this.remove(bubble);
-        bubbles.remove(bubble);
+    public void moveDownAndGenerateRow() {
+        // Move all bubbles down by two rows, keep X unchanged
+        for (Bubble b : new ArrayList<>(bubbles)) {
+            int oldY = (int) b.getY();
+            int newY = oldY + 2 * BUBBLE_SIZE;
+            b.setY(newY);
+        }
+        // Increment row count
+        rowsAdded += 2; // We add two rows
+        // Generate two new rows at the top
+        // First row: even (12 bubbles, not shifted)
+        boolean shiftX1 = false;
+        int bubblesInRow1 = 12;
+        double rowOrigin1 = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX1 ? BUBBLE_SIZE / 2.0 : 0);
+        int y1 = TOP_BORDER + BUBBLE_SIZE / 2;
+        for (int j = 0; j < bubblesInRow1; j++) {
+            int x = (int) (rowOrigin1 + j * BUBBLE_SIZE);
+            int snappedY = snapBubble(x, y1, false);
+            int snappedX = snapBubble(x, y1, true);
+            Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
+            this.add(b);
+            bubbles.add(b);
+            nextBubble.generateRandomColor();
+        }
+        // Second row: odd (11 bubbles, shifted)
+        boolean shiftX2 = true;
+        int bubblesInRow2 = 11;
+        double rowOrigin2 = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX2 ? BUBBLE_SIZE / 2.0 : 0);
+        int y2 = TOP_BORDER + BUBBLE_SIZE + BUBBLE_SIZE / 2;
+        for (int j = 0; j < bubblesInRow2; j++) {
+            int x = (int) (rowOrigin2 + j * BUBBLE_SIZE);
+            int snappedY = snapBubble(x, y2, false);
+            int snappedX = snapBubble(x, y2, true);
+            Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
+            this.add(b);
+            bubbles.add(b);
+            nextBubble.generateRandomColor();
+        }
     }
 
-
-    //public void exportToFile() {
+    // public void exportToFile() {
     //
-    //}
-//
-    //public void importFromFile() {
-//
-    //}
+    // }
+    //
+    // public void importFromFile() {
+    //
+    // }
 }
