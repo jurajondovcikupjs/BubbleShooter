@@ -1,5 +1,6 @@
 package sk.upjs.ondovcik.juraj;
 
+import sk.upjs.jpaz2.ImageTurtleShape;
 import sk.upjs.jpaz2.Turtle;
 
 public class Button extends Turtle {
@@ -21,6 +22,7 @@ public class Button extends Turtle {
 
     public void setTexture(String texture) {
         this.texture = texture;
+        this.setShape(new ImageTurtleShape(texture));
     }
 
     @Override

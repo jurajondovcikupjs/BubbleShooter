@@ -7,7 +7,9 @@ import com.logitech.gaming.LogiLED;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,22 +23,38 @@ public class Field extends WinPane {
     private final int CHECK_LINE_BOTTOM = 1000;
     private final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
     private final int BUBBLE_SIZE = 54;
-    private boolean USE_LIGHTING = true;
+    private boolean USE_LIGHTING = false;
     final double FLYING_SPEED = 18.0; // pixels per frame
 
     List<Bubble> bubbles = new ArrayList<Bubble>();
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
     Bubble flyingBubble = null;
-    Button exitButton = new Button(660, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/exit.png");
-    Button screenshotButton = new Button(610, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/screenshot.png");
-    Button lightingButton = new Button(560, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/lighting.png");
+    Button exitButton = new Button(660, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
+    Button screenshotButton = new Button(610, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
+    Button lightingButton = new Button(560, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
+    Button exportButton = new Button(510, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/export.png");
+    Button importButton = new Button(460, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/import.png");
+    Button toast = new Button(325,70, "src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
     Bubble ghostBubble;
     double flyingBubbleVX = 0;
     double flyingBubbleVY = 0;
     javax.swing.Timer flyingTimer;
     int lastScoreThreshold = 0;
-    int rowsAdded = 4; // Start with 4 initial rows
+    int rowsAdded = 4;
+    int playCount = 0; // Track number of plays
+    Button[] scoreCount = {
+            new Button(50, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(75, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(100, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(125, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(150, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(175, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(200, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(225, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(250, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+    };
+
 
     public Field() {
 
@@ -49,6 +67,9 @@ public class Field extends WinPane {
         this.add(exitButton);
         this.add(screenshotButton);
         this.add(lightingButton);
+        this.add(toast);
+        this.add(exportButton);
+        this.add(importButton);
         turret.setPosition(360, 1200);
 
         nextBubble.generateRandomColor();
@@ -64,6 +85,10 @@ public class Field extends WinPane {
         ghostBubble.penUp();
         this.add(ghostBubble);
         ghostBubble.setTransparency(0.5f); // If supported, make it semi-transparent
+
+        for (Button b : scoreCount) {
+            this.add(b);
+        }
 
         if (USE_LIGHTING) {
             LogiLED.LogiLedInit();
@@ -153,7 +178,13 @@ public class Field extends WinPane {
                 LogiLED.LogiLedShutdown();
             System.out.println("Lighting toggled: " + USE_LIGHTING);
         }
-
+        if (exportButton.checkNearButtonRectangle(x, y)) {
+            exportToFile();
+        }
+        if (importButton.checkNearButtonRectangle(x, y)) {
+            // importFromFile();
+            System.out.println("Import button clicked.");
+        }
     }
 
     public void setLogitechLighting(String color) {
@@ -319,7 +350,7 @@ public class Field extends WinPane {
             playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
             SCORE += group.size();
             scored = true;
-            System.out.println("SCORE: " + SCORE);
+            updateScoreTextures();
             // Remove flying bubbles (not connected to top row)
             List<Bubble> connectedToTop = getConnectedToTopRow();
             List<Bubble> flying = new ArrayList<>();
@@ -336,14 +367,23 @@ public class Field extends WinPane {
             int soundNumber = (int) (Math.random() * 2) + 1;
             playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
         }
-        // Move down and generate row for every 20 points
-        if ((SCORE / 30) > (lastScoreThreshold / 30)) {
+        // Move down and generate row for every 5th play
+        playCount++;
+        if (playCount % 5 == 0) {
             moveDownAndGenerateRow();
-            lastScoreThreshold = SCORE;
-            // Only update ghost bubble color, not lighting
             ghostBubble.setColor(nextBubble.getColor());
+            updateScoreTextures();
         }
         flyingBubble = null;
+    }
+
+    private void updateScoreTextures() {
+        int tempScore = SCORE;
+        for (int i = scoreCount.length - 1; i >= 0; i--) {
+            int digit = tempScore % 10;
+            scoreCount[i].setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/numbers/" + digit + ".png");
+            tempScore = tempScore / 10;
+        }
     }
 
     public void playAudio(String filePath) {
@@ -396,11 +436,21 @@ public class Field extends WinPane {
         }
     }
 
-    // public void exportToFile() {
-    //
-    // }
-    //
-    // public void importFromFile() {
-    //
-    // }
+    public void exportToFile() {
+        try (PrintWriter pw = new PrintWriter("gamesave_" + System.currentTimeMillis() + ".txt")) {
+            pw.println(SCORE);
+            pw.println(playCount);
+            pw.println(nextBubble.getColor());
+            for (Bubble b : bubbles) {
+                pw.println(b.getX() + ";" + b.getY() + ";" + b.getColor());
+            }
+            System.out.println("Game exported successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void importFromFile() {
+
+    }
 }
