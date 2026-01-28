@@ -1,7 +1,6 @@
 package sk.upjs.ondovcik.juraj;
 
 import javazoom.jl.player.Player;
-import sk.upjs.jpaz2.JPAZUtilities;
 import sk.upjs.jpaz2.Turtle;
 import sk.upjs.jpaz2.WinPane;
 import com.logitech.gaming.LogiLED;
@@ -22,7 +21,6 @@ public class Field extends WinPane {
     private final int RIGHT_BORDER = 680;
     private final int TOP_BORDER = 100;
     private final int CHECK_LINE_BOTTOM = 1000;
-    private final String FILE_PATH = "src/main/java/sk/upjs/ondovcik/juraj/res/bubbles.txt";
     private final int BUBBLE_SIZE = 54;
     private boolean USE_LIGHTING = false;
     final double FLYING_SPEED = 18.0; // pixels per frame
@@ -69,7 +67,6 @@ public class Field extends WinPane {
         this.add(exitButton);
         this.add(screenshotButton);
         this.add(lightingButton);
-        this.add(toast);
         this.add(exportButton);
         this.add(importButton);
         turret.setPosition(360, 1200);
@@ -91,6 +88,8 @@ public class Field extends WinPane {
         for (Button b : scoreCount) {
             this.add(b);
         }
+
+        this.add(toast);
 
         if (USE_LIGHTING) {
             LogiLED.LogiLedInit();
@@ -124,13 +123,15 @@ public class Field extends WinPane {
         super.onMouseMoved(x, y, detail);
         turret.setDirectionTowards(x, y);
         // Snap ghost bubble to grid
-        int snappedY = snapBubble(x, y, false);
-        int snappedX = snapBubble(x, y, true);
-        ghostBubble.setX(snappedX);
-        ghostBubble.setY(snappedY);
-        ghostBubble.setPosition(snappedX, snappedY);
-        // Always update ghost bubble color and lighting to match nextBubble
-        ghostBubble.setColor(nextBubble.getColor());
+        if (ghostBubble != null) {
+            int snappedY = snapBubble(x, y, false);
+            int snappedX = snapBubble(x, y, true);
+            ghostBubble.setX(snappedX);
+            ghostBubble.setY(snappedY);
+            ghostBubble.setPosition(snappedX, snappedY);
+            // Always update ghost bubble color and lighting to match nextBubble
+            ghostBubble.setColor(nextBubble.getColor());
+        }
     }
 
     @Override
@@ -194,7 +195,6 @@ public class Field extends WinPane {
         toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
             toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
-            System.out.println("Screenshot taken!");
         });
         timer.setRepeats(false);
         timer.start();
@@ -382,12 +382,22 @@ public class Field extends WinPane {
         }
         // Move down and generate row for every 5th play
         playCount++;
-        if (playCount % 5 == 0) {
+        if (playCount % 1 == 0) {
             moveDownAndGenerateRow();
             ghostBubble.setColor(nextBubble.getColor());
             updateScoreTextures();
         }
         flyingBubble = null;
+        checkBubblesCrossedBottom();
+    }
+
+    private void checkBubblesCrossedBottom() {
+        for (Bubble b : bubbles) {
+            if (b.getY() + BUBBLE_SIZE / 2 >= CHECK_LINE_BOTTOM) {
+                endGame();
+                break;
+            }
+        }
     }
 
     private void updateScoreTextures() {
@@ -447,10 +457,18 @@ public class Field extends WinPane {
             bubbles.add(b);
             nextBubble.generateRandomColor();
         }
+        checkBubblesCrossedBottom();
+    }
+
+    public void endGame() {
+        allowedToMove = false;
+        flyingBubble = null;
+        //ghostBubble = null;
+        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/gameover2.png");
     }
 
     public void exportToFile() {
-        try (PrintWriter pw = new PrintWriter("gamesave_" + System.currentTimeMillis() + ".txt")) {
+        try (PrintWriter pw = new PrintWriter("gamesave.txt")) {
             pw.println(SCORE);
             pw.println(playCount);
             pw.println(nextBubble.getColor());
@@ -464,7 +482,7 @@ public class Field extends WinPane {
     }
 
     public void importFromFile() {
-        try (java.util.Scanner scanner = new java.util.Scanner(new File(FILE_PATH))) {
+        try (java.util.Scanner scanner = new java.util.Scanner(new File("gamesave.txt"))) {
             // Clear existing bubbles
             for (Bubble b : new ArrayList<>(bubbles)) {
                 this.remove(b);
@@ -482,14 +500,14 @@ public class Field extends WinPane {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] parts = line.split(";");
-                int x = Integer.parseInt(parts[0]);
-                int y = Integer.parseInt(parts[1]);
+                int x = (int) Double.parseDouble(parts[0]);
+                int y = (int) Double.parseDouble(parts[1]);
                 String color = parts[2];
                 Bubble b = new Bubble(x, y, color);
                 this.add(b);
                 bubbles.add(b);
             }
-            System.out.println("Game imported successfully.");
+            allowedToMove = true;
         } catch (Exception e) {
             e.printStackTrace();
         }

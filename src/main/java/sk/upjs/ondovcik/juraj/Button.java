@@ -32,6 +32,7 @@ public class Button extends Turtle {
 
     public void setX(int x) {
         this.x = x;
+        this.moveTo(this.x, this.y);
     }
 
     @Override
@@ -41,6 +42,7 @@ public class Button extends Turtle {
 
     public void setY(int y) {
         this.y = y;
+        this.moveTo(this.x, this.y);
     }
 
     public boolean checkNearButtonCircle(int x, int y, int radius) {
