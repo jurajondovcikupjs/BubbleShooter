@@ -1,6 +1,7 @@
 package sk.upjs.ondovcik.juraj;
 
 import javazoom.jl.player.Player;
+import sk.upjs.jpaz2.JPAZUtilities;
 import sk.upjs.jpaz2.Turtle;
 import sk.upjs.jpaz2.WinPane;
 import com.logitech.gaming.LogiLED;
@@ -35,7 +36,7 @@ public class Field extends WinPane {
     Button lightingButton = new Button(560, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
     Button exportButton = new Button(510, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/export.png");
     Button importButton = new Button(460, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/import.png");
-    Button toast = new Button(325,70, "src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
+    Button toast = new Button(350,70, "src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
     Bubble ghostBubble;
     double flyingBubbleVX = 0;
     double flyingBubbleVY = 0;
@@ -54,6 +55,7 @@ public class Field extends WinPane {
             new Button(225, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
             new Button(250, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
     };
+    boolean allowedToMove = true;
 
 
     public Field() {
@@ -136,7 +138,7 @@ public class Field extends WinPane {
 
         if (flyingBubble != null)
             return; // Only one flying bubble at a time
-        if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER) {
+        if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER && allowedToMove) {
             // Set lighting to match the bubble about to be launched
             // Launch the nextBubble from the turret
             double startX = turret.getX();
@@ -167,7 +169,7 @@ public class Field extends WinPane {
         }
         if (screenshotButton.checkNearButtonRectangle(x, y)) {
             this.savePicture("screenshot_" + System.currentTimeMillis() + ".png");
-            System.out.println("Screenshot taken.");
+            showConfirmToast();
         }
         if (lightingButton.checkNearButtonRectangle(x, y)) {
             USE_LIGHTING = !USE_LIGHTING;
@@ -176,15 +178,26 @@ public class Field extends WinPane {
                 setLogitechLighting(nextBubble.getColor());
             } else
                 LogiLED.LogiLedShutdown();
-            System.out.println("Lighting toggled: " + USE_LIGHTING);
+            showConfirmToast();
         }
         if (exportButton.checkNearButtonRectangle(x, y)) {
             exportToFile();
+            showConfirmToast();
         }
         if (importButton.checkNearButtonRectangle(x, y)) {
-            // importFromFile();
-            System.out.println("Import button clicked.");
+            importFromFile();
+            showConfirmToast();
         }
+    }
+
+    public void showConfirmToast() {
+        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
+        javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+            toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+            System.out.println("Screenshot taken!");
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
 
     public void setLogitechLighting(String color) {
@@ -451,6 +464,34 @@ public class Field extends WinPane {
     }
 
     public void importFromFile() {
-
+        try (java.util.Scanner scanner = new java.util.Scanner(new File(FILE_PATH))) {
+            // Clear existing bubbles
+            for (Bubble b : new ArrayList<>(bubbles)) {
+                this.remove(b);
+            }
+            bubbles.clear();
+            // Read score and play count
+            SCORE = Integer.parseInt(scanner.nextLine());
+            playCount = Integer.parseInt(scanner.nextLine());
+            updateScoreTextures();
+            // Read next bubble color
+            String nextColor = scanner.nextLine();
+            nextBubble.setColor(nextColor);
+            ghostBubble.setColor(nextColor);
+            // Read bubbles
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split(";");
+                int x = Integer.parseInt(parts[0]);
+                int y = Integer.parseInt(parts[1]);
+                String color = parts[2];
+                Bubble b = new Bubble(x, y, color);
+                this.add(b);
+                bubbles.add(b);
+            }
+            System.out.println("Game imported successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
