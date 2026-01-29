@@ -53,6 +53,8 @@ public class Bubble extends Turtle {
                 return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
             case "yellow":
                 return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
+            case "grey":
+                return "src/main/java/sk/upjs/ondovcik/juraj/res/grey.png";
             default:
                 return "null";
         }
@@ -86,3 +88,5 @@ public class Bubble extends Turtle {
     }
 
 }
+
+

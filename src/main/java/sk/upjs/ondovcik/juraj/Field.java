@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JFileChooser;
 
 public class Field extends WinPane {
 
@@ -54,6 +55,7 @@ public class Field extends WinPane {
             new Button(250, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
     };
     boolean allowedToMove = true;
+    private boolean gameEnded = false;
 
 
     public Field() {
@@ -186,13 +188,25 @@ public class Field extends WinPane {
             showConfirmToast();
         }
         if (importButton.checkNearButtonRectangle(x, y)) {
-            importFromFile();
-            showConfirmToast();
+            if (importFromFile()) {
+                showConfirmToast();
+            }
         }
     }
 
     public void showConfirmToast() {
         toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
+        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/success.mp3");
+        javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+            toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    public void showErrorToast() {
+        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/error.png");
+        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/error.mp3");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
             toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
         });
@@ -355,12 +369,12 @@ public class Field extends WinPane {
         // Check for connected bubbles of the same color
         List<Bubble> group = getConnectedSameColorBubbles(flyingBubble);
         boolean scored = false;
+        boolean shouldPlayPop = false;
         if (group.size() >= 3) {
             for (Bubble b : group) {
                 this.remove(b);
             }
             bubbles.removeAll(group);
-            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
             SCORE += group.size();
             scored = true;
             updateScoreTextures();
@@ -376,25 +390,33 @@ public class Field extends WinPane {
                 this.remove(b);
                 bubbles.remove(b);
             }
+            shouldPlayPop = true;
         } else {
             int soundNumber = (int) (Math.random() * 2) + 1;
-            playAudio("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+            playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
         }
         // Move down and generate row for every 5th play
         playCount++;
-        if (playCount % 1 == 0) {
+        if (playCount % 5 == 0) {
             moveDownAndGenerateRow();
             ghostBubble.setColor(nextBubble.getColor());
             updateScoreTextures();
         }
         flyingBubble = null;
         checkBubblesCrossedBottom();
+        // Play pop audio after all removals and updates
+        if (shouldPlayPop) {
+            playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
+        }
     }
 
     private void checkBubblesCrossedBottom() {
         for (Bubble b : bubbles) {
             if (b.getY() + BUBBLE_SIZE / 2 >= CHECK_LINE_BOTTOM) {
-                endGame();
+                if (!gameEnded) {
+                    endGame();
+                    gameEnded = true;
+                }
                 break;
             }
         }
@@ -409,10 +431,14 @@ public class Field extends WinPane {
         }
     }
 
-    public void playAudio(String filePath) {
+    public void playAudioAsync(String filePath) {
+        new Thread(() -> playAudio(filePath)).start();
+    }
+
+    private void playAudio(String filePath) {
         try {
             FileInputStream fis = new FileInputStream(filePath);
-            Player playMP3 = new Player(fis);
+            javazoom.jl.player.Player playMP3 = new javazoom.jl.player.Player(fis);
             playMP3.play();
         } catch (Exception e) {
             e.printStackTrace();
@@ -465,6 +491,26 @@ public class Field extends WinPane {
         flyingBubble = null;
         //ghostBubble = null;
         toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/gameover2.png");
+        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/gameover.mp3");
+        // Set all bubbles' textures to grey.png
+        for (Bubble b : bubbles) {
+            b.setColor("grey");
+        }
+        nextBubble.setColor("grey");
+        ghostBubble.setColor("grey");
+    }
+
+    public String pickFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        int result = fileChooser.showOpenDialog(fileChooser);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            return selectedFile.getAbsolutePath();
+        }
+
+        return "gamesave.txt";
     }
 
     public void exportToFile() {
@@ -477,12 +523,12 @@ public class Field extends WinPane {
             }
             System.out.println("Game exported successfully.");
         } catch (Exception e) {
-            e.printStackTrace();
+            showErrorToast();
         }
     }
 
-    public void importFromFile() {
-        try (java.util.Scanner scanner = new java.util.Scanner(new File("gamesave.txt"))) {
+    public boolean importFromFile() {
+        try (java.util.Scanner scanner = new java.util.Scanner(new File(pickFile()))) {
             // Clear existing bubbles
             for (Bubble b : new ArrayList<>(bubbles)) {
                 this.remove(b);
@@ -508,8 +554,10 @@ public class Field extends WinPane {
                 bubbles.add(b);
             }
             allowedToMove = true;
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            showErrorToast();
+            return false;
         }
     }
 }
