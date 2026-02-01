@@ -11,7 +11,7 @@ public class Turret extends Turtle {
 
     public Turret() {
         this.currentColor = null;
-        this.setShape(new ImageTurtleShape("src/main/java/sk/upjs/ondovcik/juraj/res/turret.png"));
+        this.setShape(new ImageTurtleShape(getClass().getResource("/sk/upjs/ondovcik/juraj/res/turret.png")));
     }
 
     public String getCurrentColor() {

@@ -15,7 +15,7 @@ public class Bubble extends Turtle {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.setShape(new ImageTurtleShape(chooseColor(color)));
+        this.setShape(new ImageTurtleShape(getClass().getResource(chooseColor(color))));
     }
 
     public double getX() {
@@ -40,23 +40,23 @@ public class Bubble extends Turtle {
 
     public void setColor(String color) {
         this.color = color;
-        this.setShape(new ImageTurtleShape(chooseColor(color)));
+        this.setShape(new ImageTurtleShape(getClass().getResource(chooseColor(color))));
     }
 
     public String chooseColor(String color) {
         switch (color) {
             case "red":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/red.png";
+                return "/sk/upjs/ondovcik/juraj/res/red.png";
             case "blue":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/blue.png";
+                return "/sk/upjs/ondovcik/juraj/res/blue.png";
             case "green":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
+                return "/sk/upjs/ondovcik/juraj/res/green.png";
             case "yellow":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
+                return "/sk/upjs/ondovcik/juraj/res/yellow.png";
             case "grey":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/grey.png";
+                return "/sk/upjs/ondovcik/juraj/res/grey.png";
             default:
-                return "null";
+                return null;
         }
     }
 
@@ -64,21 +64,21 @@ public class Bubble extends Turtle {
         String[] colors = {"red", "blue", "green", "yellow"};
         int randomIndex = (int) (Math.random() * colors.length);
         this.color = colors[randomIndex];
-        this.setShape(new ImageTurtleShape(chooseColor(this.color)));
+        this.setShape(new ImageTurtleShape(getClass().getResource(chooseColor(this.color))));
     }
 
     public String chooseLogitechColor(String color) {
         switch (color) {
             case "red":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/red.png";
+                return "/sk/upjs/ondovcik/juraj/res/red.png";
             case "blue":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/blue.png";
+                return "/sk/upjs/ondovcik/juraj/res/blue.png";
             case "green":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/green.png";
+                return "/sk/upjs/ondovcik/juraj/res/green.png";
             case "yellow":
-                return "src/main/java/sk/upjs/ondovcik/juraj/res/yellow.png";
+                return "/sk/upjs/ondovcik/juraj/res/yellow.png";
             default:
-                return "null";
+                return null;
         }
     }
 
@@ -88,5 +88,3 @@ public class Bubble extends Turtle {
     }
 
 }
-
-

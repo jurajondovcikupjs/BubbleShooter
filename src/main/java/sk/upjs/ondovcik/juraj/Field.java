@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,13 @@ import java.util.Objects;
 import javax.swing.JFileChooser;
 
 public class Field extends WinPane {
+
+    public static void main(String[] args) {
+        //init
+        Field field = new Field();
+
+    }
+
 
     private int SCORE = 0;
     private final int LEFT_BORDER = 40;
@@ -30,12 +38,12 @@ public class Field extends WinPane {
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
     Bubble flyingBubble = null;
-    Button exitButton = new Button(660, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
-    Button screenshotButton = new Button(610, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
-    Button lightingButton = new Button(560, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
-    Button exportButton = new Button(510, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/export.png");
-    Button importButton = new Button(460, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/buttons/import.png");
-    Button toast = new Button(350,70, "src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+    Button exitButton = new Button(660, 70, "/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
+    Button screenshotButton = new Button(610, 70, "/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
+    Button lightingButton = new Button(560, 70, "/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
+    Button exportButton = new Button(510, 70, "/sk/upjs/ondovcik/juraj/res/buttons/export.png");
+    Button importButton = new Button(460, 70, "/sk/upjs/ondovcik/juraj/res/buttons/import.png");
+    Button toast = new Button(350,70, "/sk/upjs/ondovcik/juraj/res/toast/empty.png");
     Bubble ghostBubble;
     double flyingBubbleVX = 0;
     double flyingBubbleVY = 0;
@@ -44,15 +52,15 @@ public class Field extends WinPane {
     int rowsAdded = 4;
     int playCount = 0; // Track number of plays
     Button[] scoreCount = {
-            new Button(50, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(75, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(100, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(125, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(150, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(175, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(200, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(225, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(250, 70, "src/main/java/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(50, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(75, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(100, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(125, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(150, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(175, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(200, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(225, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(250, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
     };
     boolean allowedToMove = true;
     private boolean gameEnded = false;
@@ -195,20 +203,20 @@ public class Field extends WinPane {
     }
 
     public void showConfirmToast() {
-        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
-        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/success.mp3");
+        toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/success.mp3");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
-            toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+            toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/empty.png");
         });
         timer.setRepeats(false);
         timer.start();
     }
 
     public void showErrorToast() {
-        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/error.png");
-        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/error.mp3");
+        toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/error.png");
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/error.mp3");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
-            toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+            toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/empty.png");
         });
         timer.setRepeats(false);
         timer.start();
@@ -393,7 +401,7 @@ public class Field extends WinPane {
             shouldPlayPop = true;
         } else {
             int soundNumber = (int) (Math.random() * 2) + 1;
-            playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+            playAudioAsync("/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
         }
         // Move down and generate row for every 5th play
         playCount++;
@@ -406,7 +414,7 @@ public class Field extends WinPane {
         checkBubblesCrossedBottom();
         // Play pop audio after all removals and updates
         if (shouldPlayPop) {
-            playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
+            playAudioAsync("/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
         }
     }
 
@@ -426,7 +434,7 @@ public class Field extends WinPane {
         int tempScore = SCORE;
         for (int i = scoreCount.length - 1; i >= 0; i--) {
             int digit = tempScore % 10;
-            scoreCount[i].setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/numbers/" + digit + ".png");
+            scoreCount[i].setTexture("/sk/upjs/ondovcik/juraj/res/numbers/" + digit + ".png");
             tempScore = tempScore / 10;
         }
     }
@@ -437,9 +445,14 @@ public class Field extends WinPane {
 
     private void playAudio(String filePath) {
         try {
-            FileInputStream fis = new FileInputStream(filePath);
-            javazoom.jl.player.Player playMP3 = new javazoom.jl.player.Player(fis);
-            playMP3.play();
+            try (InputStream is = getClass().getResourceAsStream("/sk/upjs/ondovcik/juraj/res/" + new File(filePath).getName())) {
+                if (is == null) {
+                    System.err.println("Audio resource not found: " + filePath);
+                    return;
+                }
+                javazoom.jl.player.Player playMP3 = new javazoom.jl.player.Player(is);
+                playMP3.play();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -490,8 +503,8 @@ public class Field extends WinPane {
         allowedToMove = false;
         flyingBubble = null;
         //ghostBubble = null;
-        toast.setTexture("src/main/java/sk/upjs/ondovcik/juraj/res/toast/gameover2.png");
-        playAudioAsync("src/main/java/sk/upjs/ondovcik/juraj/res/gameover.mp3");
+        toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/gameover2.png");
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/gameover.mp3");
         // Set all bubbles' textures to grey.png
         for (Bubble b : bubbles) {
             b.setColor("grey");
@@ -561,3 +574,4 @@ public class Field extends WinPane {
         }
     }
 }
+

@@ -13,7 +13,7 @@ public class Button extends Turtle {
         this.x = x;
         this.y = y;
         this.texture = texture;
-        this.setShape(new sk.upjs.jpaz2.ImageTurtleShape(texture));
+        this.setShape(new sk.upjs.jpaz2.ImageTurtleShape(getClass().getResource(texture)));
     }
 
     public String getTexture() {
@@ -22,7 +22,7 @@ public class Button extends Turtle {
 
     public void setTexture(String texture) {
         this.texture = texture;
-        this.setShape(new ImageTurtleShape(texture));
+        this.setShape(new ImageTurtleShape(getClass().getResource(texture)));
     }
 
     @Override
