@@ -1,6 +1,33 @@
-# Bubble Shooter
+<a name="readme-top"></a>
 
-Bubble Shooter is a classic arcade-style puzzle game implemented in Java. The objective is to clear the field by shooting colored bubbles to form groups of three or more of the same color, causing them to pop and disappear. The game ends when bubbles cross the bottom line.
+<br />
+
+<h1 align="center">BubbleShooter</h1>
+
+  <p align="center">
+BubbleShooter is a classic arcade-style puzzle game implemented in Java. The objective is to clear the field by shooting colored bubbles to form groups of three or more of the same color, causing them to pop and disappear. The game ends when bubbles cross the bottom line.
+    <br />
+    <div align="center">
+      <img src="https://github.com/GeorgeYT9769/cardabase-app/blob/main/fastlane/metadata/android/en-US/images/featureGraphic.png?raw=true" alt="Banner">
+    <!-- <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a> https://discord.com/invite/fZNDfG2xv3 -->
+    <br />
+    <div align="center">
+      <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/GeorgeYT9769/cardabase-app?style=for-the-badge&label=Stars">
+      <img alt="GitHub forks" src="https://img.shields.io/github/forks/GeorgeYT9769/cardabase-app?style=for-the-badge&label=Forks">
+      <img alt="GitHub license" src="https://img.shields.io/github/license/GeorgeYT9769/cardabase-app?style=for-the-badge&label=License">
+      <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/GeorgeYT9769/cardabase-app/total?style=for-the-badge&label=Downloads">
+      <br />
+      <a href="https://discord.com/invite/fZNDfG2xv3">
+        <img alt="Discord" src="https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white">
+      </a>
+    </div>
+  </p>
+</div>
+
+<br />
+
+
+BubbleShooter is a classic arcade-style puzzle game implemented in Java. The objective is to clear the field by shooting colored bubbles to form groups of three or more of the same color, causing them to pop and disappear. The game ends when bubbles cross the bottom line.
 
 ## Features
 - Colorful bubble graphics and smooth animations

@@ -38,10 +38,11 @@ public class Field extends WinPane {
     Bubble nextBubble = new Bubble();
     Bubble flyingBubble = null;
     Button exitButton = new Button(660, 70, "/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
-    Button screenshotButton = new Button(610, 70, "/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
-    Button lightingButton = new Button(560, 70, "/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
-    Button exportButton = new Button(510, 70, "/sk/upjs/ondovcik/juraj/res/buttons/export.png");
-    Button importButton = new Button(460, 70, "/sk/upjs/ondovcik/juraj/res/buttons/import.png");
+    Button screenshotButton = new Button(620, 70, "/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
+    Button lightingButton = new Button(580, 70, "/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
+    Button exportButton = new Button(540, 70, "/sk/upjs/ondovcik/juraj/res/buttons/export.png");
+    Button importButton = new Button(500, 70, "/sk/upjs/ondovcik/juraj/res/buttons/import.png");
+    Button reloadButton = new Button(460, 70, "/sk/upjs/ondovcik/juraj/res/buttons/reload.png");
     Button toast = new Button(350,70, "/sk/upjs/ondovcik/juraj/res/toast/empty.png");
     Bubble ghostBubble;
     double flyingBubbleVX = 0;
@@ -78,6 +79,7 @@ public class Field extends WinPane {
         this.add(lightingButton);
         this.add(exportButton);
         this.add(importButton);
+        this.add(reloadButton);
         turret.setPosition(360, 1200);
 
         nextBubble.generateRandomColor();
@@ -199,6 +201,26 @@ public class Field extends WinPane {
                 showConfirmToast();
             }
         }
+        if (reloadButton.checkNearButtonRectangle(x, y)) {
+            this.remove(flyingBubble);
+            flyingBubble = null;
+            nextBubble.setX(250);
+            nextBubble.setY(1225);
+            ghostBubble.setColor(nextBubble.getColor());
+            allowedToMove = true;
+            gameEnded = false;
+            // Clear existing bubbles
+            for (Bubble b : new ArrayList<>(bubbles)) {
+                this.remove(b);
+            }
+            bubbles.clear();
+            SCORE = 0;
+            playCount = 0;
+            updateScoreTextures();
+            generateBubbles(4);
+            setLogitechLighting(nextBubble.getColor());
+            showConfirmToast();
+        }
     }
 
     public void showConfirmToast() {
@@ -230,6 +252,10 @@ public class Field extends WinPane {
             LogiLED.LogiLedSetLighting(0, 75, 0);
         } else if (Objects.equals(color, "yellow")) {
             LogiLED.LogiLedSetLighting(75, 63, 0);
+        } else if (Objects.equals(color, "pink")) {
+            LogiLED.LogiLedSetLighting(100, 0, 86);
+        } else if (Objects.equals(color, "purple")) {
+            LogiLED.LogiLedSetLighting(70, 0, 100);
         }
     }
 

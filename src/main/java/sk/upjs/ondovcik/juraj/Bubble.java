@@ -8,6 +8,7 @@ public class Bubble extends Turtle {
     private int x;
     private int y;
     private String color;
+    String[] colors = {"red", "blue", "green", "yellow", "pink", "purple"};
 
     public Bubble() {}
 
@@ -55,36 +56,20 @@ public class Bubble extends Turtle {
                 return "/sk/upjs/ondovcik/juraj/res/yellow.png";
             case "grey":
                 return "/sk/upjs/ondovcik/juraj/res/grey.png";
+            case "pink":
+                return "/sk/upjs/ondovcik/juraj/res/pink.png";
+            case "purple":
+                return "/sk/upjs/ondovcik/juraj/res/purple.png";
             default:
                 return null;
         }
     }
 
     public void generateRandomColor() {
-        String[] colors = {"red", "blue", "green", "yellow"};
+        String[] colors = {"red", "blue", "green", "yellow", "pink", "purple"};
         int randomIndex = (int) (Math.random() * colors.length);
         this.color = colors[randomIndex];
         this.setShape(new ImageTurtleShape(getClass().getResource(chooseColor(this.color))));
-    }
-
-    public String chooseLogitechColor(String color) {
-        switch (color) {
-            case "red":
-                return "/sk/upjs/ondovcik/juraj/res/red.png";
-            case "blue":
-                return "/sk/upjs/ondovcik/juraj/res/blue.png";
-            case "green":
-                return "/sk/upjs/ondovcik/juraj/res/green.png";
-            case "yellow":
-                return "/sk/upjs/ondovcik/juraj/res/yellow.png";
-            default:
-                return null;
-        }
-    }
-
-    public boolean isInRange(Bubble b) {
-        double distance = Math.sqrt(this.getX()*this.getX() + this.getY() * this.getY());
-        return distance <= 54;
     }
 
 }
