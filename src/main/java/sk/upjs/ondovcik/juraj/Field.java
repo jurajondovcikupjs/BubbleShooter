@@ -24,7 +24,6 @@ public class Field extends WinPane {
 
     }
 
-
     private int SCORE = 0;
     private final int LEFT_BORDER = 40;
     private final int RIGHT_BORDER = 680;
