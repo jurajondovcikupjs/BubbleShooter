@@ -1,6 +1,5 @@
 package sk.upjs.ondovcik.juraj;
 
-import javazoom.jl.player.Player;
 import sk.upjs.jpaz2.Turtle;
 import sk.upjs.jpaz2.WinPane;
 import com.logitech.gaming.LogiLED;
@@ -8,42 +7,47 @@ import com.logitech.gaming.LogiLED;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JFileChooser;
+import java.util.Scanner;
+import javax.swing.JOptionPane;
 
 public class Field extends WinPane {
 
     public static void main(String[] args) {
-        //init
+        // init
         Field field = new Field();
 
     }
 
+    private final int WINDOW_WIDTH = 504; // 720
+    private final int WINDOW_HEIGHT = 896; // 1280
     private int SCORE = 0;
     private final int LEFT_BORDER = 40;
-    private final int RIGHT_BORDER = 680;
+    private final int RIGHT_BORDER = WINDOW_WIDTH - LEFT_BORDER;
     private final int TOP_BORDER = 100;
-    private final int CHECK_LINE_BOTTOM = 1000;
-    private final int BUBBLE_SIZE = 54;
+    private final int CHECK_LINE_BOTTOM = WINDOW_HEIGHT - 2 * TOP_BORDER;
+    private final int BUBBLE_SIZE = 38;
     private boolean USE_LIGHTING = false;
-    final double FLYING_SPEED = 18.0; // pixels per frame
+    final double FLYING_SPEED = 15.0; // pixels per frame
 
     List<Bubble> bubbles = new ArrayList<Bubble>();
     Turtle turret = new Turret();
     Bubble nextBubble = new Bubble();
     Bubble flyingBubble = null;
-    Button exitButton = new Button(660, 70, "/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
-    Button screenshotButton = new Button(620, 70, "/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
-    Button lightingButton = new Button(580, 70, "/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
-    Button exportButton = new Button(540, 70, "/sk/upjs/ondovcik/juraj/res/buttons/export.png");
-    Button importButton = new Button(500, 70, "/sk/upjs/ondovcik/juraj/res/buttons/import.png");
-    Button reloadButton = new Button(460, 70, "/sk/upjs/ondovcik/juraj/res/buttons/reload.png");
-    Button toast = new Button(350,70, "/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+    Button exitButton = new Button(WINDOW_WIDTH - 60, 80, "/sk/upjs/ondovcik/juraj/res/buttons/exit.png");
+    Button screenshotButton = new Button(WINDOW_WIDTH - 85, 80, "/sk/upjs/ondovcik/juraj/res/buttons/screenshot.png");
+    Button lightingButton = new Button(WINDOW_WIDTH - 110, 80, "/sk/upjs/ondovcik/juraj/res/buttons/lighting.png");
+    Button exportButton = new Button(WINDOW_WIDTH - 135, 80, "/sk/upjs/ondovcik/juraj/res/buttons/export.png");
+    Button importButton = new Button(WINDOW_WIDTH - 160, 80, "/sk/upjs/ondovcik/juraj/res/buttons/import.png");
+    Button reloadButton = new Button(WINDOW_WIDTH - 185, 80, "/sk/upjs/ondovcik/juraj/res/buttons/reload.png");
+    Button toast = new Button(WINDOW_WIDTH - 135, 35, "/sk/upjs/ondovcik/juraj/res/toast/empty.png");
+    Button leaderboard = new Button((double) WINDOW_WIDTH - 210, 80,
+            "/sk/upjs/ondovcik/juraj/res/buttons/leaderboard.png");
     Bubble ghostBubble;
     double flyingBubbleVX = 0;
     double flyingBubbleVY = 0;
@@ -52,27 +56,30 @@ public class Field extends WinPane {
     int rowsAdded = 4;
     int playCount = 0; // Track number of plays
     Button[] scoreCount = {
-            new Button(50, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(75, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(100, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(125, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(150, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(175, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(200, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(225, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
-            new Button(250, 70, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(50, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(70, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(90, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(110, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(130, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(150, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(170, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(190, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
+            new Button(210, 80, "/sk/upjs/ondovcik/juraj/res/numbers/0.png"),
     };
     boolean allowedToMove = true;
     private boolean gameEnded = false;
 
-
     public Field() {
+        generateGameWindow();
+    }
 
-        this.setTitle("Bubble Shooter");
-        this.resize(720, 1280);
+    public void generateGameWindow() {
+        this.setTitle("BubbleShooter");
+        this.resize(WINDOW_WIDTH, WINDOW_HEIGHT); // 720x1280
         this.setPosition(0, 0);
         this.setResizable(false);
         this.setBackgroundColor(Theme.BACKGROUND_COLOR);
+
         this.add(turret);
         this.add(exitButton);
         this.add(screenshotButton);
@@ -80,14 +87,15 @@ public class Field extends WinPane {
         this.add(exportButton);
         this.add(importButton);
         this.add(reloadButton);
-        turret.setPosition(360, 1200);
+        this.add(leaderboard);
+        turret.setPosition((double) this.getWidth() / 2, this.getHeight() - 80);
 
         nextBubble.generateRandomColor();
         this.add(nextBubble);
-        nextBubble.setX(250);
-        nextBubble.setY(1225);
+        nextBubble.setX(this.getWidth() / 4);
+        nextBubble.setY(this.getHeight() - 55);
 
-        generateUI();
+        generateBorders();
         generateBubbles(4);
 
         ghostBubble = new Bubble();
@@ -112,7 +120,7 @@ public class Field extends WinPane {
         flyingTimer.start();
     }
 
-    public void generateUI() {
+    public void generateBorders() {
         Turtle t = new Turtle();
         this.add(t);
         t.setPenWidth(5);
@@ -135,8 +143,8 @@ public class Field extends WinPane {
         turret.setDirectionTowards(x, y);
         // Snap ghost bubble to grid
         if (ghostBubble != null) {
-            int snappedY = snapBubble(x, y, false);
-            int snappedX = snapBubble(x, y, true);
+            double snappedY = snapBubble(x, y, false);
+            double snappedX = snapBubble(x, y, true);
             ghostBubble.setX(snappedX);
             ghostBubble.setY(snappedY);
             ghostBubble.setPosition(snappedX, snappedY);
@@ -164,26 +172,22 @@ public class Field extends WinPane {
             this.add(flyingBubble);
             flyingBubble.penUp();
 
-            nextBubble.setX(-1000);
-            nextBubble.setX(nextBubble.getX() + 1000);
-
-            // Prepare next bubble
             nextBubble.generateRandomColor();
-            nextBubble.setX(250);
-            nextBubble.setY(1225);
-            // Only update ghost bubble color, not lighting
+            nextBubble.setX(this.getWidth() / 4);
+            nextBubble.setY(this.getHeight() - 55);
             ghostBubble.setColor(nextBubble.getColor());
-            if (USE_LIGHTING) setLogitechLighting(nextBubble.getColor());
+            if (USE_LIGHTING)
+                setLogitechLighting(nextBubble.getColor());
         }
 
-        if (exitButton.checkNearButtonRectangle(x, y)) {
+        if (exitButton.checkNearButtonRectangle(x, y, 11)) {
             System.exit(0);
         }
-        if (screenshotButton.checkNearButtonRectangle(x, y)) {
+        if (screenshotButton.checkNearButtonRectangle(x, y, 11)) {
             this.savePicture("screenshot_" + System.currentTimeMillis() + ".png");
             showConfirmToast();
         }
-        if (lightingButton.checkNearButtonRectangle(x, y)) {
+        if (lightingButton.checkNearButtonRectangle(x, y, 11)) {
             USE_LIGHTING = !USE_LIGHTING;
             if (USE_LIGHTING) {
                 LogiLED.LogiLedInit();
@@ -192,20 +196,20 @@ public class Field extends WinPane {
                 LogiLED.LogiLedShutdown();
             showConfirmToast();
         }
-        if (exportButton.checkNearButtonRectangle(x, y)) {
+        if (exportButton.checkNearButtonRectangle(x, y, 11)) {
             exportToFile();
             showConfirmToast();
         }
-        if (importButton.checkNearButtonRectangle(x, y)) {
+        if (importButton.checkNearButtonRectangle(x, y, 11)) {
             if (importFromFile()) {
                 showConfirmToast();
             }
         }
-        if (reloadButton.checkNearButtonRectangle(x, y)) {
+        if (reloadButton.checkNearButtonRectangle(x, y, 11)) {
             this.remove(flyingBubble);
             flyingBubble = null;
-            nextBubble.setX(250);
-            nextBubble.setY(1225);
+            nextBubble.setX(this.getWidth() / 4);
+            nextBubble.setY(this.getHeight() - 55);
             ghostBubble.setColor(nextBubble.getColor());
             allowedToMove = true;
             gameEnded = false;
@@ -221,11 +225,15 @@ public class Field extends WinPane {
             setLogitechLighting(nextBubble.getColor());
             showConfirmToast();
         }
+        if (leaderboard.checkNearButtonRectangle(x, y, 11)) {
+
+            showLeaderboardDialog();
+        }
     }
 
     public void showConfirmToast() {
         toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/confirm2.png");
-        playAudioAsync("/sk/upjs/ondovcik/juraj/res/success.mp3");
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/sound/success.mp3");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
             toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/empty.png");
         });
@@ -235,7 +243,7 @@ public class Field extends WinPane {
 
     public void showErrorToast() {
         toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/error.png");
-        playAudioAsync("/sk/upjs/ondovcik/juraj/res/error.mp3");
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/sound/error.mp3");
         javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
             toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/empty.png");
         });
@@ -259,21 +267,21 @@ public class Field extends WinPane {
         }
     }
 
-    public int snapBubble(int x, int y, boolean isX) {
+    public double snapBubble(int x, int y, boolean isX) {
         return snapBubble((double) x, (double) y, isX);
     }
 
-    public int snapBubble(double x, double y, boolean isX) {
+    public double snapBubble(double x, double y, boolean isX) {
         int tempY = (int) (y - TOP_BORDER);
         int row = tempY / BUBBLE_SIZE;
         boolean shiftX = (row % 2 == 1);
-        int snappedY = row * BUBBLE_SIZE + TOP_BORDER + BUBBLE_SIZE / 2;
+        double snappedY = row * BUBBLE_SIZE + TOP_BORDER + BUBBLE_SIZE / 2.0;
 
         if (isX) {
-            double gridOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
+            double gridOrigin = LEFT_BORDER + BUBBLE_SIZE / 2.0 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
             double colRaw = (x - gridOrigin) / BUBBLE_SIZE;
             int col = (int) Math.round(colRaw); // Use Math.round for center snapping
-            return (int) (gridOrigin + col * BUBBLE_SIZE);
+            return gridOrigin + col * BUBBLE_SIZE;
         } else {
             return snappedY;
         }
@@ -281,14 +289,14 @@ public class Field extends WinPane {
 
     public void generateBubbles(int amountOfRows) {
         for (int i = 0; i < amountOfRows; i++) {
-            int bubblesInRow = (i % 2 == 0) ? 12 : 11;
+            int bubblesInRow = (i % 2 == 0) ? 11 : 10;
             boolean shiftX = (i % 2 == 1);
             double rowOrigin = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX ? BUBBLE_SIZE / 2.0 : 0);
             int y = TOP_BORDER + i * BUBBLE_SIZE + BUBBLE_SIZE / 2;
             for (int j = 0; j < bubblesInRow; j++) {
                 int x = (int) (rowOrigin + j * BUBBLE_SIZE);
-                int snappedY = snapBubble(x, y, false);
-                int snappedX = snapBubble(x, y, true);
+                double snappedY = snapBubble(x, y, false);
+                double snappedX = snapBubble(x, y, true);
                 Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
                 this.add(b);
                 bubbles.add(b);
@@ -311,8 +319,8 @@ public class Field extends WinPane {
             x = RIGHT_BORDER - BUBBLE_SIZE / 2;
             flyingBubbleVX = -flyingBubbleVX;
         }
-        flyingBubble.setX((int) x);
-        flyingBubble.setY((int) y);
+        flyingBubble.setX(x);
+        flyingBubble.setY(y);
         // Check collision with top border
         if (y < TOP_BORDER + BUBBLE_SIZE / 2) {
             snapFlyingBubble();
@@ -393,9 +401,54 @@ public class Field extends WinPane {
         return connected;
     }
 
+    private boolean isPositionOccupied(double x, double y) {
+        for (Bubble b : bubbles) {
+            if (Math.abs(b.getX() - x) < 1 && Math.abs(b.getY() - y) < 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void snapFlyingBubble() {
-        int snappedY = snapBubble(flyingBubble.getX(), flyingBubble.getY(), false);
-        int snappedX = snapBubble(flyingBubble.getX(), flyingBubble.getY(), true);
+        // Find the best empty position
+        double snappedY = snapBubble(flyingBubble.getX(), flyingBubble.getY(), false);
+        double snappedX = snapBubble(flyingBubble.getX(), flyingBubble.getY(), true);
+
+        // If the intended position is occupied, look for neighbors
+        if (isPositionOccupied(snappedX, snappedY)) {
+            double bestDist = Double.MAX_VALUE;
+            double bestX = snappedX;
+            double bestY = snappedY;
+
+            // Search in a small area around the collision for the nearest empty grid cell
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (dx == 0 && dy == 0)
+                        continue;
+
+                    // Calculate potential neighbor coordinates
+                    double testY = snappedY + dy * BUBBLE_SIZE;
+                    double testX = snappedX + dx * BUBBLE_SIZE;
+
+                    // Re-snap to ensure valid grid position (handles hex offset)
+                    double finalTestY = snapBubble(testX, testY, false);
+                    double finalTestX = snapBubble(testX, testY, true);
+
+                    if (!isPositionOccupied(finalTestX, finalTestY)) {
+                        double d = Math.hypot(finalTestX - flyingBubble.getX(), finalTestY - flyingBubble.getY());
+                        if (d < bestDist) {
+                            bestDist = d;
+                            bestX = finalTestX;
+                            bestY = finalTestY;
+                        }
+                    }
+                }
+            }
+            snappedX = bestX;
+            snappedY = bestY;
+        }
+
         flyingBubble.setX(snappedX);
         flyingBubble.setY(snappedY);
         bubbles.add(flyingBubble);
@@ -423,12 +476,16 @@ public class Field extends WinPane {
                 this.remove(b);
                 bubbles.remove(b);
             }
+            // Add points for each flying bubble removed
+            if (!flying.isEmpty()) {
+                SCORE += flying.size();
+                updateScoreTextures();
+            }
             shouldPlayPop = true;
         } else {
             int soundNumber = (int) (Math.random() * 2) + 1;
-            playAudioAsync("/sk/upjs/ondovcik/juraj/res/bubble-place-" + soundNumber + ".mp3");
+            playAudioAsync("/sk/upjs/ondovcik/juraj/res/sound/bubble-place-" + soundNumber + ".mp3");
         }
-        // Move down and generate row for every 5th play
         playCount++;
         if (playCount % 5 == 0) {
             moveDownAndGenerateRow();
@@ -439,7 +496,7 @@ public class Field extends WinPane {
         checkBubblesCrossedBottom();
         // Play pop audio after all removals and updates
         if (shouldPlayPop) {
-            playAudioAsync("/sk/upjs/ondovcik/juraj/res/bubble-pop.mp3");
+            playAudioAsync("/sk/upjs/ondovcik/juraj/res/sound/bubble-pop.mp3");
         }
     }
 
@@ -470,7 +527,8 @@ public class Field extends WinPane {
 
     private void playAudio(String filePath) {
         try {
-            try (InputStream is = getClass().getResourceAsStream("/sk/upjs/ondovcik/juraj/res/" + new File(filePath).getName())) {
+            try (InputStream is = getClass()
+                    .getResourceAsStream("/sk/upjs/ondovcik/juraj/res/sound/" + new File(filePath).getName())) {
                 if (is == null) {
                     System.err.println("Audio resource not found: " + filePath);
                     return;
@@ -499,9 +557,9 @@ public class Field extends WinPane {
         double rowOrigin1 = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX1 ? BUBBLE_SIZE / 2.0 : 0);
         int y1 = TOP_BORDER + BUBBLE_SIZE / 2;
         for (int j = 0; j < bubblesInRow1; j++) {
-            int x = (int) (rowOrigin1 + j * BUBBLE_SIZE);
-            int snappedY = snapBubble(x, y1, false);
-            int snappedX = snapBubble(x, y1, true);
+            double x = rowOrigin1 + j * BUBBLE_SIZE;
+            double snappedY = snapBubble(x, y1, false);
+            double snappedX = snapBubble(x, y1, true);
             Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
             this.add(b);
             bubbles.add(b);
@@ -513,9 +571,9 @@ public class Field extends WinPane {
         double rowOrigin2 = LEFT_BORDER + BUBBLE_SIZE / 2 + (shiftX2 ? BUBBLE_SIZE / 2.0 : 0);
         int y2 = TOP_BORDER + BUBBLE_SIZE + BUBBLE_SIZE / 2;
         for (int j = 0; j < bubblesInRow2; j++) {
-            int x = (int) (rowOrigin2 + j * BUBBLE_SIZE);
-            int snappedY = snapBubble(x, y2, false);
-            int snappedX = snapBubble(x, y2, true);
+            double x = rowOrigin2 + j * BUBBLE_SIZE;
+            double snappedY = snapBubble(x, y2, false);
+            double snappedX = snapBubble(x, y2, true);
             Bubble b = new Bubble(snappedX, snappedY, nextBubble.getColor());
             this.add(b);
             bubbles.add(b);
@@ -527,19 +585,116 @@ public class Field extends WinPane {
     public void endGame() {
         allowedToMove = false;
         flyingBubble = null;
-        //ghostBubble = null;
         toast.setTexture("/sk/upjs/ondovcik/juraj/res/toast/gameover2.png");
-        playAudioAsync("/sk/upjs/ondovcik/juraj/res/gameover.mp3");
-        // Set all bubbles' textures to grey.png
+        playAudioAsync("/sk/upjs/ondovcik/juraj/res/sound/gameover.mp3");
         for (Bubble b : bubbles) {
             b.setColor("grey");
         }
         nextBubble.setColor("grey");
         ghostBubble.setColor("grey");
+
+        // Ask for name using JOptionPane
+        String defaultName = "defaultname";
+        String playerName = JOptionPane.showInputDialog(null, "Enter your name for the leaderboard:", "Leaderboard",
+                JOptionPane.QUESTION_MESSAGE);
+        if (playerName == null || playerName.trim().isEmpty()) {
+            playerName = defaultName;
+        }
+
+        // Scoreboard logic
+        String scoreboardFile = "scoreboard.txt";
+        List<String> lines = new ArrayList<>();
+        try {
+            File file = new File(scoreboardFile);
+            if (file.exists()) {
+                Scanner scanner = new Scanner(file);
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    lines.add(line);
+                }
+                scanner.close();
+            }
+        } catch (Exception e) {
+            // Ignore, treat as empty scoreboard
+        }
+        // Parse and insert new score
+        List<String[]> entries = new ArrayList<>();
+        for (String line : lines) {
+            String[] parts = line.split(";");
+            if (parts.length == 2) {
+                entries.add(parts);
+            }
+        }
+        // Insert new score
+        boolean inserted = false;
+        for (int i = 0; i < entries.size(); i++) {
+            int score = 0;
+            try {
+                score = Integer.parseInt(entries.get(i)[1]);
+            } catch (Exception ignored) {
+            }
+            if (SCORE > score) {
+                entries.add(i, new String[] { playerName, String.valueOf(SCORE) });
+                inserted = true;
+                break;
+            }
+        }
+        if (!inserted && entries.size() < 10) {
+            entries.add(new String[] { playerName, String.valueOf(SCORE) });
+        }
+        // Keep only top 10
+        while (entries.size() > 10) {
+            entries.remove(entries.size() - 1);
+        }
+        // Write back to file
+        try {
+            PrintWriter pw = new PrintWriter(scoreboardFile);
+            for (String[] entry : entries) {
+                pw.println(entry[0] + ";" + entry[1]);
+            }
+            pw.close();
+        } catch (Exception e) {
+            // Ignore write errors
+        }
+    }
+
+    // Show leaderboard in a message dialog using StringBuilder
+    private void showLeaderboardDialog() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Leaderboard\n\n");
+        try {
+            java.io.File file = new java.io.File("scoreboard.txt");
+            if (file.exists()) {
+                java.util.Scanner scanner = new java.util.Scanner(file);
+                int i = 1;
+                while (scanner.hasNextLine() && i <= 10) {
+                    String line = scanner.nextLine();
+                    String name = line;
+                    String score = "";
+                    int sep = line.lastIndexOf(';');
+                    if (sep != -1) {
+                        name = line.substring(0, sep);
+                        score = line.substring(sep + 1);
+                    }
+                    sb.append(i).append(". ").append(name).append(" ").append(score).append("\n");
+                    i++;
+                }
+                scanner.close();
+            } else {
+                sb.append("No scores yet.\n");
+            }
+        } catch (Exception e) {
+            sb.append("Could not read leaderboard.\n");
+        }
+        JOptionPane.showMessageDialog(null, sb.toString(), "Leaderboard", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public String pickFile() {
         JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setApproveButtonText("Select");
+        fileChooser.setDialogTitle("Select a BubbleShooter backup file");
+        fileChooser.setBackground(Theme.BACKGROUND_COLOR);
+        fileChooser.setForeground(Theme.BACKGROUND_COLOR);
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         int result = fileChooser.showOpenDialog(fileChooser);
 
@@ -548,25 +703,24 @@ public class Field extends WinPane {
             return selectedFile.getAbsolutePath();
         }
 
-        return "gamesave.txt";
+        return "";
     }
 
     public void exportToFile() {
-        try (PrintWriter pw = new PrintWriter("gamesave.txt")) {
+        try (PrintWriter pw = new PrintWriter("gamesave" + System.currentTimeMillis() + ".txt")) {
             pw.println(SCORE);
             pw.println(playCount);
             pw.println(nextBubble.getColor());
             for (Bubble b : bubbles) {
                 pw.println(b.getX() + ";" + b.getY() + ";" + b.getColor());
             }
-            System.out.println("Game exported successfully.");
         } catch (Exception e) {
             showErrorToast();
         }
     }
 
     public boolean importFromFile() {
-        try (java.util.Scanner scanner = new java.util.Scanner(new File(pickFile()))) {
+        try (Scanner scanner = new Scanner(new File(pickFile()))) {
             // Clear existing bubbles
             for (Bubble b : new ArrayList<>(bubbles)) {
                 this.remove(b);
@@ -584,8 +738,8 @@ public class Field extends WinPane {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] parts = line.split(";");
-                int x = (int) Double.parseDouble(parts[0]);
-                int y = (int) Double.parseDouble(parts[1]);
+                double x = Double.parseDouble(parts[0]);
+                double y = Double.parseDouble(parts[1]);
                 String color = parts[2];
                 Bubble b = new Bubble(x, y, color);
                 this.add(b);

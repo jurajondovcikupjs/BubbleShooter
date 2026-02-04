@@ -45,11 +45,7 @@ public class Button extends Turtle {
         this.moveTo(this.x, this.y);
     }
 
-    public boolean checkNearButtonCircle(int x, int y, int radius) {
-        return this.distanceTo(x, y) <= radius;
-    }
-
-    public boolean checkNearButtonRectangle(int x, int y) {
-        return x >= this.x - 16 && x <= this.x + 16 && y >= this.y - 16 && y <= this.y + 16;
+    public boolean checkNearButtonRectangle(int x, int y, int r) {
+        return x >= this.x - r && x <= this.x + r && y >= this.y - r && y <= this.y + r;
     }
 }
