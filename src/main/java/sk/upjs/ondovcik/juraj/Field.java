@@ -158,7 +158,7 @@ public class Field extends WinPane {
 
         if (flyingBubble != null)
             return; // Only one flying bubble at a time
-        if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER && allowedToMove) {
+        if (x > LEFT_BORDER && x < RIGHT_BORDER && y > TOP_BORDER && y < CHECK_LINE_BOTTOM && allowedToMove) {
             // Set lighting to match the bubble about to be launched
             // Launch the nextBubble from the turret
             double startX = turret.getX();
