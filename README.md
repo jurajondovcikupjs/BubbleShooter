@@ -45,7 +45,7 @@ BubbleShooter is a classic arcade-style puzzle game implemented in Java. The obj
 2. Place the LogiLED JAR file in a directory of your choice together with the game JAR.
 2. Run the game, either by double-clicking the JAR file or using the command line:
    ```
-   java -cp BubbleShooter.jar;logiled.jar sk.upjs.ondovcik.juraj.Start
+   java -cp BubbleShooter_signed.jar;logiled.jar sk.upjs.ondovcik.juraj.Start
    ```
 This is to ensure that the Logitech SDK is available for the game to use.
 
